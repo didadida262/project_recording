@@ -31,10 +31,11 @@ id = "这里粘贴你的 Namespace ID"
 
 1. **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
 2. 选仓库与分支，创建项目
-3. **构建设置**（Build configuration）：
-   - **Build command**：`npm run build`
-   - **Build output directory**：`dist`
-   - Root directory：若项目在仓库根目录则留空
+3. **构建设置**（Build configuration）——**必须填写，否则会报 `dist` 不存在**：
+   - **Framework preset**：选 **Vite**，或选 **None** 后手动填下面两项
+   - **Build command**：`npm run build`（必填；留空则不会执行构建，不会出现 `dist`）
+   - **Build output directory**：`dist`（与 Vite 默认输出一致）
+   - **Root directory**：项目在仓库根目录则留空
 4. **Save and Deploy** 先完成一次构建（此时 `/api/records` 可能还不可用，直到绑定 KV）
 5. 进入该项目 → **Settings** → **Functions** → 找到 **KV namespace bindings** → **Add binding**：
    - **Variable name** 必须填：**`PUNCH_KV`**（与 `functions/api/records.ts` 里一致）
@@ -95,3 +96,21 @@ npm run build        # 生成 dist/
 npm run pages:dev    # build + 本地模拟 Pages（含 Functions）
 npm run pages:deploy # build + 部署到 Cloudflare Pages
 ```
+
+---
+
+## 故障排除：`Output directory "dist" not found` / `No build command specified`
+
+日志里若出现 **Skipping build step**、**Output directory "dist" not found**，说明 **Cloudflare 没有执行 `npm run build`**。
+
+**处理：**
+
+1. 打开 Pages 项目 → **Settings** → **Build**（或 **Builds & deployments** → **Build configuration**）→ **Edit configuration**。
+2. 设置：
+   - **Build command**：`npm run build`
+   - **Build output directory**：`dist`
+3. **Save**，再 **Retry deployment** 或重新推送一次 commit。
+
+`wrangler.toml` 里的 `pages_build_output_dir` **不能代替** 在控制台填写构建命令；Git 集成时构建命令以 Dashboard 为准（可选用 **Vite** 预设自动带出上述命令与目录）。
+
+若使用 Functions + `wrangler.toml`，请确认项目已使用 [**V2 build system**](https://developers.cloudflare.com/pages/configuration/build-image/#v2-build-system)（Dashboard → Builds → 构建镜像版本）。
