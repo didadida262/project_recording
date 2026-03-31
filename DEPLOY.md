@@ -13,15 +13,12 @@
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. 左侧 **Workers & Pages** → **KV**
 3. **Create a namespace**，名称随意，例如 `punch-records`
-4. 创建后点进该 Namespace，复制 **Namespace ID**（一长串十六进制）
 
-把根目录 `wrangler.toml` 里的占位符换成你的 ID（本地用 `wrangler pages dev` 时需要）：
+**注意：** 本仓库的 `wrangler.toml` **不再**写 KV 的 Namespace ID（占位符会导致部署报错 `Invalid KV namespace ID`）。**生产环境**只要在下面「二」里绑定即可。
 
-```toml
-[[kv_namespaces]]
-binding = "PUNCH_KV"
-id = "这里粘贴你的 Namespace ID"
-```
+本地用 `wrangler pages dev` 需要 KV 时，在命令里带上真实 ID，例如：
+
+`npx wrangler pages dev dist --kv=PUNCH_KV=你的NamespaceID`
 
 ---
 
@@ -114,3 +111,7 @@ npm run pages:deploy # build + 部署到 Cloudflare Pages
 `wrangler.toml` 里的 `pages_build_output_dir` **不能代替** 在控制台填写构建命令；Git 集成时构建命令以 Dashboard 为准（可选用 **Vite** 预设自动带出上述命令与目录）。
 
 若使用 Functions + `wrangler.toml`，请确认项目已使用 [**V2 build system**](https://developers.cloudflare.com/pages/configuration/build-image/#v2-build-system)（Dashboard → Builds → 构建镜像版本）。
+
+### `Invalid KV namespace ID` / `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`
+
+说明 `wrangler.toml` 里曾写过**无效的 KV ID 占位符**。请**不要**在仓库里填占位符；应删除 `[[kv_namespaces]]` 中的假 ID（本仓库已去掉），并仅在 **Pages → Settings → Functions → KV bindings** 里绑定 **PUNCH_KV**。提交后重新部署。
