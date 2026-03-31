@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-elevated: var(--app-elevated);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-muted: var(--app-muted);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-glow: var(--app-glow);
+}
+
+:root {
+  --app-bg: #070708;
+  --app-surface: #0f0f12;
+  --app-elevated: #18181c;
+  --app-border: rgba(255, 255, 255, 0.06);
+  --app-text: #fafafa;
+  --app-muted: #a1a1aa;
+  --app-accent: #10b981;
+  --app-accent-hover: #34d399;
+  --app-glow: rgba(16, 185, 129, 0.4);
+}
+
+html.light {
+  --app-bg: #f4f4f5;
+  --app-surface: #ffffff;
+  --app-elevated: #e4e4e7;
+  --app-border: rgba(24, 24, 27, 0.08);
+  --app-text: #18181b;
+  --app-muted: #71717a;
+  --app-accent: #059669;
+  --app-accent-hover: #047857;
+  --app-glow: rgba(5, 150, 105, 0.28);
+}
+
+html {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* 打卡按钮：绿 / 浅绿渐变 + 外发光呼吸（与 .punch-btn-face-breathe 配套） */
+.punch-btn-face {
+  background:
+    radial-gradient(
+      ellipse 95% 60% at 50% 8%,
+      rgba(255, 255, 255, 0.42) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      160deg,
+      #a7f3d0 0%,
+      #6ee7b7 28%,
+      #34d399 55%,
+      #059669 88%,
+      #047857 100%
+    );
+}
+
+.punch-btn-face-static {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 8px 28px rgba(0, 0, 0, 0.32),
+    0 0 40px rgba(52, 211, 153, 0.38);
+}
+
+.punch-btn-face-breathe {
+  animation: punch-breathe-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes punch-breathe-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      0 0 32px rgba(110, 231, 183, 0.35),
+      0 0 48px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.24) inset,
+      0 8px 28px rgba(0, 0, 0, 0.32),
+      0 0 48px rgba(167, 243, 208, 0.45),
+      0 0 72px rgba(52, 211, 153, 0.4);
+  }
+}
+
+html.light .punch-btn-face {
+  background:
+    radial-gradient(
+      ellipse 95% 60% at 50% 8%,
+      rgba(255, 255, 255, 0.65) 0%,
+      transparent 52%
+    ),
+    linear-gradient(160deg, #d1fae5 0%, #6ee7b7 40%, #10b981 78%, #047857 100%);
+}
+
+html.light .punch-btn-face-static {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+    0 8px 24px rgba(5, 150, 105, 0.18),
+    0 0 36px rgba(16, 185, 129, 0.22);
+}
+
+html.light .punch-btn-face-breathe {
+  animation-name: punch-breathe-glow-light;
+}
+
+@keyframes punch-breathe-glow-light {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+      0 6px 20px rgba(5, 150, 105, 0.12),
+      0 0 28px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+      0 8px 24px rgba(5, 150, 105, 0.16),
+      0 0 44px rgba(52, 211, 153, 0.32);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punch-btn-face-breathe {
+    animation: none;
+  }
+
+  .punch-btn-face:not(.punch-btn-face-static) {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      0 0 40px rgba(52, 211, 153, 0.35);
+  }
+
+  html.light .punch-btn-face:not(.punch-btn-face-static) {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+      0 6px 20px rgba(5, 150, 105, 0.14),
+      0 0 32px rgba(16, 185, 129, 0.22);
+  }
+}
