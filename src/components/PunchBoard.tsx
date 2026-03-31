@@ -172,7 +172,7 @@ export function PunchBoard({
       <div className="flex flex-col items-center gap-6">
         <PunchButton onPunch={onPunch} />
         <p className="text-center text-sm text-app-muted">
-          点击按钮记录当前准确时间，数据保存在本机浏览器。
+          点击按钮记录当前准确时间；部署后数据在云端，所有访问本站的人共享同一份列表。
         </p>
       </div>
 

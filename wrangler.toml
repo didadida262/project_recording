@@ -1,0 +1,17 @@
+# Cloudflare Pages：与前端同仓部署时使用
+# 1) 在 Dashboard 创建 KV Namespace，名称如 punch-records
+# 2) Pages 项目 → Settings → Functions → KV bindings：Variable name = PUNCH_KV，选该 Namespace
+# 3) 本地预览：wrangler pages dev dist --kv=PUNCH_KV （需先在 wrangler 里配置 preview 用的 kv）
+
+name = "project-recording"
+compatibility_date = "2024-12-30"
+pages_build_output_dir = "dist"
+
+# 将下方 id 换成你在 Cloudflare 控制台创建的 KV Namespace ID（或使用 wrangler kv namespace create）
+[[kv_namespaces]]
+binding = "PUNCH_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# 可选：允许的浏览器 Origin，逗号分隔；留空或 * 表示允许任意来源（仅建议开发环境）
+# [vars]
+# ALLOWED_ORIGIN = "https://your-project.pages.dev,https://example.com"
