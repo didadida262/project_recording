@@ -48,6 +48,17 @@ function corsHeaders(request: Request, env: Env): Record<string, string> {
   };
 }
 
+/** 避免边缘/手机浏览器缓存动态列表，导致「手机操作不同步」假象 */
+function noStoreHeaders(request: Request, env: Env): Record<string, string> {
+  return {
+    ...corsHeaders(request, env),
+    "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
+    Pragma: "no-cache",
+    // Cloudflare 边缘尽量不缓存动态 API
+    "CDN-Cache-Control": "no-store",
+  };
+}
+
 export async function onRequestOptions(context: {
   request: Request;
   env: Env;
@@ -64,7 +75,7 @@ function kvMissingResponse(request: Request, env: Env): Response {
       error: "kv_not_configured",
       hint: "Pages → Settings → Bindings：为 Production 添加 PUNCH_KV → KV namespace",
     },
-    { status: 503, headers: corsHeaders(request, env) },
+    { status: 503, headers: noStoreHeaders(request, env) },
   );
 }
 
@@ -73,7 +84,7 @@ export async function onRequestGet(context: {
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
-  const ch = corsHeaders(request, env);
+  const ch = noStoreHeaders(request, env);
   if (!env.PUNCH_KV) {
     return kvMissingResponse(request, env);
   }
@@ -98,7 +109,7 @@ export async function onRequestPut(context: {
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
-  const ch = corsHeaders(request, env);
+  const ch = noStoreHeaders(request, env);
   if (!env.PUNCH_KV) {
     return kvMissingResponse(request, env);
   }

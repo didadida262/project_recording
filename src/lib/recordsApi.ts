@@ -26,7 +26,12 @@ export function normalizeRecords(data: unknown): PunchRecord[] {
 }
 
 export async function fetchRemoteRecords(): Promise<PunchRecord[]> {
-  const res = await fetch(recordsApiUrl());
+  const base = recordsApiUrl();
+  const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache" },
+  });
   if (!res.ok) {
     const t = await res.text();
     throw new Error(t || `HTTP ${res.status}`);
@@ -38,7 +43,11 @@ export async function fetchRemoteRecords(): Promise<PunchRecord[]> {
 export async function pushRemoteRecords(records: PunchRecord[]): Promise<void> {
   const res = await fetch(recordsApiUrl(), {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
     body: JSON.stringify(records),
   });
   if (!res.ok) {
