@@ -11,14 +11,22 @@
 ## 一、在 Cloudflare 创建 KV（存打卡数据）
 
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. 左侧 **Workers & Pages** → **KV**
-3. **Create a namespace**，名称随意，例如 `punch-records`
+2. 左侧 **Storage & databases** → **Workers KV**（或 **Workers & Pages** → **KV**）
+3. **Create a namespace**，例如 `punch_recordings`
+4. 打开该 Namespace → **Instance Detail** / **Settings** 里复制 **Namespace ID**（32 位十六进制）
 
-**注意：** 本仓库的 `wrangler.toml` **不再**写 KV 的 Namespace ID（占位符会导致部署报错 `Invalid KV namespace ID`）。**生产环境**只要在下面「二」里绑定即可。
+### Bindings：Dashboard 还是 wrangler.toml？
 
-本地用 `wrangler pages dev` 需要 KV 时，在命令里带上真实 ID，例如：
+两种互斥，以你界面为准：
 
-`npx wrangler pages dev dist --kv=PUNCH_KV=你的NamespaceID`
+| 情况 | 做法 |
+|------|------|
+| 可以在 **Pages → Settings → Bindings** 里点 **Add** | 在网页里添加 **PUNCH_KV** → 选 Namespace 即可，`wrangler.toml` 里**不要**写 `[[kv_namespaces]]`，或从仓库删除该段以免冲突。 |
+| 提示 **Bindings are managed through wrangler.toml** | 必须在仓库 **`wrangler.toml`** 里配置 `[[kv_namespaces]]`，`binding = "PUNCH_KV"`，`id = "你的NamespaceID"`，提交后重新部署；控制台无法在此模式下手动加 KV。 |
+
+**注意：** `id` 必须是真实 Namespace ID；填写 `REPLACE_...` 等假字符串会导致部署报错。
+
+本地：`npm run build && npx wrangler pages dev dist` 会使用 `wrangler.toml` 里的 KV 配置。
 
 ---
 
@@ -33,11 +41,9 @@
    - **Build command**：`npm run build`（必填；留空则不会执行构建，不会出现 `dist`）
    - **Build output directory**：`dist`（与 Vite 默认输出一致）
    - **Root directory**：项目在仓库根目录则留空
-4. **Save and Deploy** 先完成一次构建（此时 `/api/records` 可能还不可用，直到绑定 KV）
-5. 进入该项目 → **Settings** → **Functions** → 找到 **KV namespace bindings** → **Add binding**：
-   - **Variable name** 必须填：**`PUNCH_KV`**（与 `functions/api/records.ts` 里一致）
-   - **KV namespace**：选你在「一」里创建的 Namespace
-6. 回到 **Deployments**，对最新一次部署 **Retry deployment**，或随便推一个空 commit 触发重新部署
+4. **Save and Deploy** 先完成一次构建。
+5. **KV**：若控制台提示由 **wrangler.toml** 管理 Bindings，则在仓库 **`wrangler.toml`** 里配置 `[[kv_namespaces]]`（见「一」）；若网页可 **Add**，则添加 **PUNCH_KV** → 选 Namespace。勿重复、勿冲突。
+6. **Deployments** 里 **Retry deployment** 或推送新 commit，使配置生效。
 
 ### 方式 B：命令行部署（不连 Git）
 
@@ -111,6 +117,20 @@ npm run pages:deploy # build + 部署到 Cloudflare Pages
 `wrangler.toml` 里的 `pages_build_output_dir` **不能代替** 在控制台填写构建命令；Git 集成时构建命令以 Dashboard 为准（可选用 **Vite** 预设自动带出上述命令与目录）。
 
 若使用 Functions + `wrangler.toml`，请确认项目已使用 [**V2 build system**](https://developers.cloudflare.com/pages/configuration/build-image/#v2-build-system)（Dashboard → Builds → 构建镜像版本）。
+
+### 线上 `GET /api/records` 返回 **500**，页面提示无法连接云端
+
+常见原因：**KV 只绑在 Preview，没绑 Production**（或只绑了某一环境）。
+
+1. 打开 **Workers & Pages** → 你的项目 → **Settings** → **Bindings**。
+2. 看页面里是否有 **环境切换**（**Production** / **Preview**），两个环境都要各加一条：
+   - **Variable name**：`PUNCH_KV`
+   - **KV namespace**：选你的 `punch_recordings`（或同名 Namespace）
+3. **Save**，到 **Deployments** 里 **Retry deployment** 或重新推送一次 commit。
+
+另请确认：自定义域名（如 `www.mileswang262.com`）指向的 **就是这个** Pages 项目，而不是别的空项目。
+
+部署更新后的代码后，若仍未绑定 KV，接口会返回 **503** 与 JSON 提示 `kv_not_configured`，而不再是难以排查的 500。
 
 ### `Invalid KV namespace ID` / `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`
 

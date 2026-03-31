@@ -7,7 +7,8 @@
 type PunchRecord = { id: string; at: string };
 
 interface Env {
-  PUNCH_KV: KVNamespace;
+  /** 未在 Dashboard（Production）绑定时为 undefined，直接调 .get 会 500 */
+  PUNCH_KV?: KVNamespace;
   ALLOWED_ORIGIN?: string;
 }
 
@@ -57,12 +58,25 @@ export async function onRequestOptions(context: {
   });
 }
 
+function kvMissingResponse(request: Request, env: Env): Response {
+  return Response.json(
+    {
+      error: "kv_not_configured",
+      hint: "Pages → Settings → Bindings：为 Production 添加 PUNCH_KV → KV namespace",
+    },
+    { status: 503, headers: corsHeaders(request, env) },
+  );
+}
+
 export async function onRequestGet(context: {
   request: Request;
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
   const ch = corsHeaders(request, env);
+  if (!env.PUNCH_KV) {
+    return kvMissingResponse(request, env);
+  }
   const raw = await env.PUNCH_KV.get(GLOBAL_KEY);
   if (raw === null) {
     return Response.json([], { headers: ch });
@@ -85,6 +99,9 @@ export async function onRequestPut(context: {
 }): Promise<Response> {
   const { request, env } = context;
   const ch = corsHeaders(request, env);
+  if (!env.PUNCH_KV) {
+    return kvMissingResponse(request, env);
+  }
   const text = await request.text();
   if (text.length > 2_000_000) {
     return Response.json({ error: "too_large" }, { status: 413, headers: ch });

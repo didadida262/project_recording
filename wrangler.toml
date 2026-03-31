@@ -1,18 +1,19 @@
-# Cloudflare Pages（Git 部署）
+# Cloudflare Pages：Git 部署会读取本文件。
 #
-# KV 不要在仓库里写 Namespace ID，否则占位符会导致部署报错：
-# Invalid KV namespace ID ... Not a valid hex string
+# 若 Dashboard 提示「Bindings are managed through wrangler.toml」，
+# 则必须在下面配置 KV，控制台里无法再加 Bindings（与旧文档「只在 Dashboard 绑」二选一，以你账号实际为准）。
 #
-# 正确做法：在 Cloudflare Dashboard → 你的 Pages 项目 → Settings → Functions
-# → KV namespace bindings → Variable name = PUNCH_KV → 选择已创建的 Namespace
-#
-# 本地 wrangler pages dev 需要 KV 时，用命令行传入（把下面 ID 换成你的）：
-#   npx wrangler pages dev dist --kv=PUNCH_KV=你的NamespaceID
+# Namespace ID：Workers KV → 点开你的 Namespace → Instance Detail → Namespace ID（32 位十六进制）
 
 name = "project-recording"
 compatibility_date = "2024-12-30"
 pages_build_output_dir = "./dist"
 
-# 可选：允许的浏览器 Origin（也可在 Pages → Environment variables 配置 ALLOWED_ORIGIN）
+[[kv_namespaces]]
+binding = "PUNCH_KV"
+# 在 Cloudflare 控制台复制你的 Namespace ID 替换下面这一行（勿使用假占位符）
+id = "dde600c7e6fa4298aa7df2e1a43a0211"
+
+# 可选：允许的浏览器 Origin
 # [vars]
-# ALLOWED_ORIGIN = "https://your-project.pages.dev,https://example.com"
+# ALLOWED_ORIGIN = "https://www.mileswang262.com,https://mileswang262.com"
