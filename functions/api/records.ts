@@ -4,7 +4,7 @@
  * 路径：GET/PUT /api/records
  */
 
-type PunchRecord = { id: string; at: string };
+type PunchRecord = { id: string; at: string; label: string };
 
 interface Env {
   /** 未在 Dashboard（Production）绑定时为 undefined，直接调 .get 会 500 */
@@ -25,7 +25,12 @@ function parseRecords(data: unknown): PunchRecord[] | null {
     if (typeof o.id !== "string" || o.id.length > 100) return null;
     if (typeof o.at !== "string" || o.at.length > 40) return null;
     if (Number.isNaN(Date.parse(o.at))) return null;
-    out.push({ id: o.id, at: o.at });
+    const labelRaw = (o as { label?: unknown }).label;
+    const label =
+      typeof labelRaw === "string" && labelRaw.trim().length > 0
+        ? labelRaw.trim().slice(0, 64)
+        : "打卡";
+    out.push({ id: o.id, at: o.at, label });
   }
   return out;
 }

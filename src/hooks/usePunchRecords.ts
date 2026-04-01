@@ -3,7 +3,10 @@ import { fetchRemoteRecords, pushRemoteRecords } from "../lib/recordsApi";
 
 export type PunchRecord = {
   id: string;
+  /** ISO 时间 */
   at: string;
+  /** 记录名称，例如“打卡” */
+  label: string;
 };
 
 const STORAGE_KEY = "punch-records";
@@ -14,15 +17,20 @@ function load(): PunchRecord[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (x): x is PunchRecord =>
-        typeof x === "object" &&
-        x !== null &&
-        "id" in x &&
-        "at" in x &&
-        typeof (x as PunchRecord).id === "string" &&
-        typeof (x as PunchRecord).at === "string",
-    );
+    return parsed
+      .filter(
+        (x): x is PunchRecord =>
+          typeof x === "object" &&
+          x !== null &&
+          "id" in x &&
+          "at" in x &&
+          typeof (x as PunchRecord).id === "string" &&
+          typeof (x as PunchRecord).at === "string",
+      )
+      .map((r) => ({
+        ...r,
+        label: r.label || "打卡",
+      }));
   } catch {
     return [];
   }
@@ -94,6 +102,7 @@ export function usePunchRecords() {
     const next: PunchRecord = {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
+      label: "打卡",
     };
     setRecords((prev) => [next, ...prev]);
     return next;
@@ -103,12 +112,24 @@ export function usePunchRecords() {
     setRecords((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
-  const updateRecord = useCallback((id: string, atIso: string) => {
-    setRecords((prev) => {
-      const next = prev.map((r) => (r.id === id ? { ...r, at: atIso } : r));
-      return sortByTimeDesc(next);
-    });
-  }, []);
+  const updateRecord = useCallback(
+    (id: string, changes: { at?: string; label?: string }) => {
+      setRecords((prev) => {
+        const next = prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                ...changes,
+                label: changes.label ?? r.label,
+                at: changes.at ?? r.at,
+              }
+            : r,
+        );
+        return sortByTimeDesc(next);
+      });
+    },
+    [],
+  );
 
   const dismissCloudError = useCallback(() => setCloudError(null), []);
 

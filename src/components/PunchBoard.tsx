@@ -20,7 +20,7 @@ type PunchBoardProps = {
   records: PunchRecord[];
   onPunch: () => void;
   onRemoveRecord: (id: string) => void;
-  onUpdateRecord: (id: string, atIso: string) => void;
+  onUpdateRecord: (id: string, changes: { at?: string; label?: string }) => void;
 };
 
 /** Fixed height scroll area: scrollbar stays on this element, not the page */
@@ -32,7 +32,7 @@ type RecordRowProps = {
   editing: boolean;
   onStartEdit: () => void;
   onCancelEdit: () => void;
-  onCommitTime: (iso: string) => void;
+  onCommit: (changes: { at?: string; label?: string }) => void;
   onRemove: () => void;
   reduceMotion: boolean;
 };
@@ -43,17 +43,21 @@ function RecordRow({
   editing,
   onStartEdit,
   onCancelEdit,
-  onCommitTime,
+  onCommit,
   onRemove,
   reduceMotion,
 }: RecordRowProps) {
-  const [draft, setDraft] = useState(() =>
+  const [draftAt, setDraftAt] = useState(() =>
     isoToDatetimeLocalValue(record.at),
   );
+  const [draftLabel, setDraftLabel] = useState(() => record.label);
 
   useEffect(() => {
-    if (editing) setDraft(isoToDatetimeLocalValue(record.at));
-  }, [editing, record.at]);
+    if (editing) {
+      setDraftAt(isoToDatetimeLocalValue(record.at));
+      setDraftLabel(record.label);
+    }
+  }, [editing, record.at, record.label]);
 
   useEffect(() => {
     if (!editing) return;
@@ -65,8 +69,11 @@ function RecordRow({
   }, [editing, onCancelEdit]);
 
   const handleSave = () => {
-    const iso = datetimeLocalValueToIso(draft);
-    if (iso) onCommitTime(iso);
+    const iso = datetimeLocalValueToIso(draftAt);
+    onCommit({
+      at: iso ?? record.at,
+      label: draftLabel.trim() || "打卡",
+    });
   };
 
   return (
@@ -78,10 +85,18 @@ function RecordRow({
       {editing ? (
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <input
+            type="text"
+            value={draftLabel}
+            onChange={(e) => setDraftLabel(e.target.value)}
+            aria-label="编辑记录名称"
+            placeholder="打卡"
+            className="min-w-0 flex-1 rounded-lg border border-app-border bg-app-elevated px-2 py-2 text-sm text-app-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+          />
+          <input
             type="datetime-local"
             step={1}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            value={draftAt}
+            onChange={(e) => setDraftAt(e.target.value)}
             aria-label="编辑打卡时间"
             className="min-w-0 flex-1 rounded-lg border border-app-border bg-app-elevated px-2 py-2 font-mono text-sm text-app-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
           />
@@ -109,14 +124,24 @@ function RecordRow({
           </div>
         </div>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onStartEdit}
-            className="min-w-0 truncate text-left font-mono text-sm text-app-text underline-offset-2 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent sm:text-base"
-            aria-label={`编辑时间 ${formatLocalDateTime(record.at)}`}
+            className="group min-w-0 truncate text-left text-sm font-medium text-app-text underline-offset-2 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent sm:text-base"
+            aria-label={`编辑记录 ${record.label} ${formatLocalDateTime(
+              record.at,
+            )}`}
           >
-            <time dateTime={record.at}>{formatLocalDateTime(record.at)}</time>
+            <span className="mr-1.5 inline-flex max-w-[6rem] items-center justify-start truncate align-middle text-[11px] font-semibold text-emerald-100 sm:mr-2 sm:max-w-[7.5rem]">
+              <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-linear-to-r from-emerald-500/90 via-emerald-400/80 to-emerald-500/90 px-2 py-[3px] text-[11px] shadow-[0_0_12px_rgba(16,185,129,0.55)] transition-transform duration-150 group-hover:scale-[1.03]">
+                <span className="h-[6px] w-[6px] rounded-full bg-emerald-100 shadow-[0_0_8px_rgba(209,250,229,0.9)]" />
+                <span className="truncate">{record.label}</span>
+              </span>
+            </span>
+            <time dateTime={record.at} className="font-mono">
+              {formatLocalDateTime(record.at)}
+            </time>
           </button>
           <motion.button
             type="button"
@@ -172,7 +197,7 @@ export function PunchBoard({
       <div className="flex flex-col items-center gap-6">
         <PunchButton onPunch={onPunch} />
         <p className="text-center text-sm text-app-muted">
-          点击按钮记录当前准确时间；部署后数据在云端，所有访问本站的人共享同一份列表。
+          点击一次，即刻记下一条「打卡」记录和当下时间。数据保存在云端，所有访问本站的设备共享同一份列表。
         </p>
       </div>
 
@@ -186,7 +211,7 @@ export function PunchBoard({
         </h2>
         {records.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-app-border bg-app-surface/50 px-4 py-10 text-center text-sm text-app-muted">
-            暂无记录，点击上方按钮开始打卡。
+            还没有任何打卡记录。点击上方圆形按钮，创建你的第 1 条记录。
           </p>
         ) : (
           <div
@@ -216,8 +241,8 @@ export function PunchBoard({
                       editing={editingId === r.id}
                       onStartEdit={() => setEditingId(r.id)}
                       onCancelEdit={() => setEditingId(null)}
-                      onCommitTime={(iso) => {
-                        onUpdateRecord(r.id, iso);
+                      onCommit={(changes) => {
+                        onUpdateRecord(r.id, changes);
                         setEditingId(null);
                       }}
                       onRemove={() => onRemoveRecord(r.id)}
